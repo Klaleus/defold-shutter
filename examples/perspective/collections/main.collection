@@ -1,0 +1,45 @@
+name: "main"
+instances {
+  id: "camera"
+  prototype: "/shutter/shutter.go"
+  component_properties {
+    id: "script"
+    properties {
+      id: "type"
+      value: "perspective"
+      type: PROPERTY_TYPE_HASH
+    }
+    properties {
+      id: "behavior"
+      value: "expand"
+      type: PROPERTY_TYPE_HASH
+    }
+    properties {
+      id: "near"
+      value: "0.1"
+      type: PROPERTY_TYPE_NUMBER
+    }
+    properties {
+      id: "far"
+      value: "1000.0"
+      type: PROPERTY_TYPE_NUMBER
+    }
+  }
+}
+instances {
+  id: "main"
+  prototype: "/examples/perspective/objects/main.go"
+}
+instances {
+  id: "cube"
+  prototype: "/examples/perspective/objects/cube.go"
+  position {
+    z: -2.0
+  }
+}
+scale_along_z: 0
+embedded_instances {
+  id: "camera_parent"
+  children: "camera"
+  data: ""
+}

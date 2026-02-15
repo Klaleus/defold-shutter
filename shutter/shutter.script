@@ -25,6 +25,7 @@
 
 local _shutter_module = require("shutter.shutter")
 
+go.property("type", hash("orthographic"))
 go.property("behavior", hash("center"))
 go.property("viewport_x", 0)
 go.property("viewport_y", 0)
@@ -33,13 +34,16 @@ go.property("viewport_height", 1080)
 go.property("near", -1)
 go.property("far", 1)
 go.property("zoom", 1)
+go.property("field_of_view", 90)
 
 function init(self)
 	assert(not _shutter_module.camera_table[go.get_id()])
-	assert(self.behavior == _shutter_module.center_behavior or self.behavior == _shutter_module.expand_behavior or self.behavior == _shutter_module.stretch_behavior, "Please choose one of the following behaviors: center, expand, or stretch")
+	assert(self.type == _shutter_module.orthographic_type or self.type == _shutter_module.perspective_type, "Please choose one of the following camera types: orthographic or perspective")
+	assert(self.behavior == _shutter_module.center_behavior or self.behavior == _shutter_module.expand_behavior or self.behavior == _shutter_module.stretch_behavior, "Please choose one of the following camera behaviors: center, expand, or stretch")
 
 	_shutter_module.camera_table[go.get_id()] =
 	{
+		type = self.type,
 		behavior = self.behavior,
 		viewport_x = self.viewport_x,
 		viewport_y = self.viewport_y,
@@ -48,6 +52,7 @@ function init(self)
 		near = self.near,
 		far = self.far,
 		zoom = self.zoom,
+		field_of_view = self.field_of_view,
 		view = vmath.matrix4(),
 		shake_origin = nil
 	}

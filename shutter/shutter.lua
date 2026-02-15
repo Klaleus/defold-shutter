@@ -29,6 +29,11 @@ local _shutter_module = {}
 _shutter_module.camera_table = {}
 local _camera_table = _shutter_module.camera_table
 
+_shutter_module.orthographic_type = hash("orthographic")
+_shutter_module.perspective_type = hash("perspective")
+local _orthographic_type = _shutter_module.orthographic_type
+local _perspective_type = _shutter_module.perspective_type
+
 _shutter_module.center_behavior = hash("center")
 _shutter_module.expand_behavior = hash("expand")
 _shutter_module.stretch_behavior = hash("stretch")
@@ -105,17 +110,32 @@ function _shutter_module.get_projection(object)
 
 	-- Center and stretch behaviors project to the same point in clip space regardless of window size.
 	if camera.behavior == _center_behavior or camera.behavior == _stretch_behavior then
-		local right = _display_width * 0.5 / camera.zoom
-		local top = _display_height * 0.5 / camera.zoom
-		return vmath.matrix4_orthographic(-right, right, -top, top, camera.near, camera.far)
+		if camera.type == _orthographic_type then
+			local right = _display_width * 0.5 / camera.zoom
+			local top = _display_height * 0.5 / camera.zoom
+			return vmath.matrix4_orthographic(-right, right, -top, top, camera.near, camera.far)
+
+		elseif camera.type == _perspective_type then
+			local field_of_view = math.rad(camera.field_of_view)
+			local aspect_ratio = _display_width / _display_height
+			return vmath.matrix4_perspective(field_of_view, aspect_ratio, camera.near, camera.far)
+		end
 	end
 
 	-- Expand behavior projects more narrowly as window size increases, and more widely as window size decreases, in clip space.
 	if camera.behavior == _expand_behavior then
 		local window_width, window_height = window.get_size()
-		local right = window_width * 0.5 / camera.zoom
-		local top = window_height * 0.5 / camera.zoom
-		return vmath.matrix4_orthographic(-right, right, -top, top, camera.near, camera.far)
+
+		if camera.type == _orthographic_type then
+			local right = window_width * 0.5 / camera.zoom
+			local top = window_height * 0.5 / camera.zoom
+			return vmath.matrix4_orthographic(-right, right, -top, top, camera.near, camera.far)
+
+		elseif camera.type == _perspective_type then
+			local field_of_view = math.rad(camera.field_of_view)
+			local aspect_ratio = window_width / window_height
+			return vmath.matrix4_perspective(field_of_view, aspect_ratio, camera.near, camera.far)
+		end
 	end
 end
 
@@ -135,11 +155,10 @@ function _shutter_module.shake(object, parent, count, duration, radius, duration
 	local recursive_count = 0
 
 	local function recursive()
-		-- Not sure if this is the best way to achieve randomness without a proper generator,
-		-- but it seems to work fine for now.
-		-- Suggestions welcome, please and thank you.
+		-- Not sure if this is the best way to achieve randomness without a proper generator...
 		local random = socket.gettime() * 1000
-		local to = radius * vmath.vector3(math.cos(random), math.sin(random), 0)
+		-- Not sure if the z position should be animated when a perspective camera is being used...
+		local to = camera.shake_origin + radius * vmath.vector3(math.cos(random), math.sin(random), 0)
 
 		go.animate(shake_object, "position", go.PLAYBACK_ONCE_PINGPONG, to, go.EASING_LINEAR, duration, 0, function()
 			assert(_camera_table[object])

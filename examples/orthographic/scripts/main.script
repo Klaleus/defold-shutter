@@ -1,6 +1,6 @@
 local _shutter_module = require("shutter.shutter")
 
-local _camera_movement_speed = 540
+local _camera_movement_speed = 1080
 local _camera_rotation_speed = 90
 
 local _prehash_table =
@@ -91,12 +91,12 @@ function on_input(_, action_id, action)
 			-- This example shakes the parent of the camera object 20 times in a pingpong fashion,
 			-- where each pingpong lasts for 0.05 seconds,
 			-- where each pingpong displaces the camera by 100 pixels,
-			-- where each pingpong decreases the duration (0.5) and radius (100) by a factor of 0.9.
+			-- where each pingpong decreases the duration (0.05) and radius (100) by a factor of 0.9.
 			-- These last two optional arguments apply a smoothing effect as the shake comes to an end.
-			-- Note that shaking the parent object allows us to continue panning the camera (child object) simultaneously.
+			-- Note that shaking the parent object allows us to continue moving the camera (child object) simultaneously.
 			_shutter_module.shake(_prehash_table.camera_object, true, 20, 0.05, 100, 0.9, 0.9)
 
-		elseif action_id == _input_table.key_esc then
+		elseif action_id == _prehash_table.key_esc then
 			sys.exit(0)
 		end
 

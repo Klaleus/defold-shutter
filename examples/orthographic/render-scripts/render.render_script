@@ -15,7 +15,6 @@ function update(self, dt)
 	render.clear({ [graphics.BUFFER_TYPE_COLOR0_BIT] = vmath.vector4() })
 
 	-- Activate the appropriate camera and save its frustum for culling purposes.
-	-- (This particular example project doesn't cull anything.)
 	local frustum = _shutter_module.activate(camera_object)
 
 	-- Draw the lone 1920x1080 sprite.
