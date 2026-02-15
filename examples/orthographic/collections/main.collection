@@ -1,0 +1,27 @@
+name: "main"
+instances {
+  id: "main"
+  prototype: "/examples/orthographic/objects/main.go"
+}
+instances {
+  id: "camera"
+  prototype: "/shutter/shutter.go"
+  position {
+    x: 960.0
+    y: 540.0
+  }
+}
+instances {
+  id: "1920x1080"
+  prototype: "/examples/orthographic/objects/image.go"
+  position {
+    x: 960.0
+    y: 540.0
+  }
+}
+scale_along_z: 0
+embedded_instances {
+  id: "camera_parent"
+  children: "camera"
+  data: ""
+}

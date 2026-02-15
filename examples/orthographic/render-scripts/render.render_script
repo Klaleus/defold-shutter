@@ -1,0 +1,23 @@
+local _shutter_module = require("shutter.shutter")
+
+-- Child camera object in the main collection.
+-- main:/camera_parent/camera
+local camera_object = hash("/camera")
+
+-- We're only drawing a single sprite with the builtin sprite material.
+local _tile_predicate = nil
+
+function init(self)
+	_tile_predicate = render.predicate({ hash("tile") })
+end
+
+function update(self, dt)
+	render.clear({ [graphics.BUFFER_TYPE_COLOR0_BIT] = vmath.vector4() })
+
+	-- Activate the appropriate camera and save its frustum for culling purposes.
+	-- (This particular example project doesn't cull anything.)
+	local frustum = _shutter_module.activate(camera_object)
+
+	-- Draw the lone 1920x1080 sprite.
+	render.draw(_tile_predicate, { frustum = frustum })
+end

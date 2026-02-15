@@ -1,0 +1,72 @@
+--------------------------------------------------------------------------------
+-- License
+--------------------------------------------------------------------------------
+
+-- Copyright (c) 2026 Klaleus
+--
+-- This software is provided "as-is", without any express or implied warranty.
+-- In no event will the authors be held liable for any damages arising from the use of this software.
+--
+-- Permission is granted to anyone to use this software for any purpose, including commercial applications,
+-- and to alter it and redistribute it freely, subject to the following restrictions:
+--
+--     1. The origin of this software must not be misrepresented; you must not claim that you wrote the original software.
+--        If you use this software in a product, an acknowledgment in the product documentation would be appreciated but is not required.
+--
+--     2. Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.
+--
+--     3. This notice may not be removed or altered from any source distribution.
+
+--------------------------------------------------------------------------------
+
+-- GitHub: https://github.com/klaleus/defold-shutter
+
+--------------------------------------------------------------------------------
+
+local _shutter_module = require("shutter.shutter")
+
+go.property("behavior", hash("center"))
+go.property("viewport_x", 0)
+go.property("viewport_y", 0)
+go.property("viewport_width", 1920)
+go.property("viewport_height", 1080)
+go.property("near", -1)
+go.property("far", 1)
+go.property("zoom", 1)
+
+function init(self)
+	assert(not _shutter_module.camera_table[go.get_id()])
+	assert(self.behavior == _shutter_module.center_behavior or self.behavior == _shutter_module.expand_behavior or self.behavior == _shutter_module.stretch_behavior, "Please choose one of the following behaviors: center, expand, or stretch")
+
+	_shutter_module.camera_table[go.get_id()] =
+	{
+		behavior = self.behavior,
+		viewport_x = self.viewport_x,
+		viewport_y = self.viewport_y,
+		viewport_width = self.viewport_width,
+		viewport_height = self.viewport_height,
+		near = self.near,
+		far = self.far,
+		zoom = self.zoom,
+		view = vmath.matrix4(),
+		shake_origin = nil
+	}
+end
+
+function final()
+	local camera = _shutter_module.camera_table[go.get_id()]
+	assert(camera)
+
+	if camera.shake_origin then
+		_shutter_module.cancel_shake(go.get_id())
+	end
+
+	_shutter_module.camera_table[go.get_id()] = nil
+end
+
+function late_update()
+	local camera = _shutter_module.camera_table[go.get_id()]
+	assert(camera)
+
+	camera.view = vmath.inv(go.get_world_transform())
+end

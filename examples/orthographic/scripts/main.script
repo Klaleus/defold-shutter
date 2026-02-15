@@ -1,0 +1,121 @@
+local _shutter_module = require("shutter.shutter")
+
+local _camera_movement_speed = 540
+local _camera_rotation_speed = 90
+
+local _prehash_table =
+{
+	message_acquire_input_focus = hash("acquire_input_focus"),
+	mouse_wheel_up = hash("mouse_wheel_up"),
+	mouse_wheel_down = hash("mouse_wheel_down"),
+	key_w = hash("key_w"),
+	key_a = hash("key_a"),
+	key_s = hash("key_s"),
+	key_d = hash("key_d"),
+	key_e = hash("key_e"),
+	key_q = hash("key_q"),
+	key_f = hash("key_f"),
+	key_space = hash("key_space"),
+	key_esc = hash("key_esc"),
+
+	-- Child camera object in the main collection.
+	-- main:/camera_parent/camera
+	camera_object = hash("/camera")
+}
+
+local _input_table =
+{
+	key_w = 0,
+	key_a = 0,
+	key_s = 0,
+	key_d = 0,
+	key_e = 0,
+	key_q = 0
+}
+
+function init()
+	msg.post(msg.url(), _prehash_table.message_acquire_input_focus)
+end
+
+function update(_, dt)
+	-- Move the camera.
+	local movement_velocity = vmath.vector3(_input_table.key_a + _input_table.key_d, _input_table.key_w + _input_table.key_s, 0) * _camera_movement_speed * dt
+	local position = go.get_position(_prehash_table.camera_object)
+	go.set_position(position + movement_velocity, _prehash_table.camera_object)
+
+	-- Rotate the camera.
+	local rotation_velocity = (_input_table.key_e + _input_table.key_q) * _camera_rotation_speed * dt
+	local euler_z = go.get(_prehash_table.camera_object, "euler.z")
+	go.set(_prehash_table.camera_object, "euler.z", euler_z + rotation_velocity)
+end
+
+function on_input(_, action_id, action)
+	-- Cache camera data.
+	local camera = _shutter_module.camera_table[_prehash_table.camera_object]
+
+	if action.pressed then
+		-- Scroll the mouse wheel to zoom the camera.
+		if action_id == _prehash_table.mouse_wheel_up then
+			camera.zoom = vmath.clamp(camera.zoom * 2, 0.125, 8)
+		elseif action_id == _prehash_table.mouse_wheel_down then
+			camera.zoom = vmath.clamp(camera.zoom * 0.5, 0.125, 8)
+
+		-- Press WASD to move the camera.
+		elseif action_id == _prehash_table.key_w then
+			_input_table.key_w = 1
+		elseif action_id == _prehash_table.key_a then
+			_input_table.key_a = -1
+		elseif action_id == _prehash_table.key_s then
+			_input_table.key_s = -1
+		elseif action_id == _prehash_table.key_d then
+			_input_table.key_d = 1
+
+		-- Press the E and Q keys to rotate the camera.
+		elseif action_id == _prehash_table.key_e then
+			_input_table.key_e = 1
+		elseif action_id == _prehash_table.key_q then
+			_input_table.key_q = -1
+
+		-- Press the F key to swap camera behaviors.
+		elseif action_id == _prehash_table.key_f then
+			if camera.behavior == _shutter_module.center_behavior then
+				camera.behavior = _shutter_module.expand_behavior
+			elseif camera.behavior == _shutter_module.expand_behavior then
+				camera.behavior = _shutter_module.stretch_behavior
+			elseif camera.behavior == _shutter_module.stretch_behavior then
+				camera.behavior = _shutter_module.center_behavior
+			end
+
+		-- Press the space bar to shake the camera.
+	elseif action_id == _prehash_table.key_space then
+			-- This example shakes the parent of the camera object 20 times in a pingpong fashion,
+			-- where each pingpong lasts for 0.05 seconds,
+			-- where each pingpong displaces the camera by 100 pixels,
+			-- where each pingpong decreases the duration (0.5) and radius (100) by a factor of 0.9.
+			-- These last two optional arguments apply a smoothing effect as the shake comes to an end.
+			-- Note that shaking the parent object allows us to continue panning the camera (child object) simultaneously.
+			_shutter_module.shake(_prehash_table.camera_object, true, 20, 0.05, 100, 0.9, 0.9)
+
+		elseif action_id == _input_table.key_esc then
+			sys.exit(0)
+		end
+
+	elseif action.released then
+		-- Release WASD to stop moving the camera.
+		if action_id == _prehash_table.key_w then
+			_input_table.key_w = 0
+		elseif action_id == _prehash_table.key_a then
+			_input_table.key_a = 0
+		elseif action_id == _prehash_table.key_s then
+			_input_table.key_s = 0
+		elseif action_id == _prehash_table.key_d then
+			_input_table.key_d = 0
+
+		-- Release Q and E to stop rotating the camera.
+		elseif action_id == _prehash_table.key_e then
+			_input_table.key_e = 0
+		elseif action_id == _prehash_table.key_q then
+			_input_table.key_q = 0
+		end
+	end
+end
