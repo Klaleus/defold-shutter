@@ -1,7 +1,7 @@
 local _shutter_module = require("shutter.shutter")
 
 local _camera_movement_speed = 1080
-local _camera_rotation_speed = 90
+local _camera_rotation_speed = 120
 
 local _prehash_table =
 {
@@ -38,22 +38,39 @@ function init()
 end
 
 function update(_, dt)
-	-- Move the camera.
-	local movement_velocity = vmath.vector3(_input_table.key_a + _input_table.key_d, _input_table.key_w + _input_table.key_s, 0) * _camera_movement_speed * dt
-	local position = go.get_position(_prehash_table.camera_object)
-	go.set_position(position + movement_velocity, _prehash_table.camera_object)
-
 	-- Rotate the camera.
 	local rotation_velocity = (_input_table.key_e + _input_table.key_q) * _camera_rotation_speed * dt
 	local euler_z = go.get(_prehash_table.camera_object, "euler.z")
 	go.set(_prehash_table.camera_object, "euler.z", euler_z + rotation_velocity)
+
+	-- Move the camera along its local axes.
+	local movement_velocity = vmath.vector3(_input_table.key_a + _input_table.key_d, _input_table.key_w + _input_table.key_s, 0) * _camera_movement_speed * dt / _shutter_module.camera_table[_prehash_table.camera_object].zoom
+	local rotation = go.get_rotation(_prehash_table.camera_object)
+	movement_velocity = vmath.rotate(rotation, movement_velocity)
+	local position = go.get_position(_prehash_table.camera_object)
+	go.set_position(position + movement_velocity, _prehash_table.camera_object)
 end
 
 function on_input(_, action_id, action)
 	-- Cache camera data.
 	local camera = _shutter_module.camera_table[_prehash_table.camera_object]
 
-	if action.pressed then
+	-- Move the mouse to see screen <-> world coordinates in standard output.
+	if not action_id then
+		-- If the mouse moves outside the viewport boundaries, then don't bother printing anything.
+		local world_position = _shutter_module.screen_to_world(_prehash_table.camera_object, action.screen_x, action.screen_y, true)
+		if not world_position then return end
+
+		-- Note that `action.screen_x` and `action.screen_y` round their values,
+		-- whereas the result from `_shutter_module.world_to_screen()` doesn't.
+		-- Therefore, output comparing these will usually be slightly different.
+		-- This is most easily observed by setting the camera's behavior to stretch (by pressing the F key twice),
+		-- greatly increasing the width or height of the window, then observing the output.
+		local screen_x, screen_y = _shutter_module.world_to_screen(_prehash_table.camera_object, world_position, true)
+		pprint("Screen (" .. action.screen_x .. ", " .. action.screen_y .. ") -> World (" .. world_position.x .. ", " .. world_position.y .. ")")
+		pprint("World (" .. world_position.x .. ", " .. world_position.y .. ") -> Screen (" .. screen_x .. ", " .. screen_y .. ")\n")
+
+	elseif action.pressed then
 		-- Scroll the mouse wheel to zoom the camera.
 		if action_id == _prehash_table.mouse_wheel_up then
 			camera.zoom = vmath.clamp(camera.zoom * 2, 0.125, 8)

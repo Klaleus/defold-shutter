@@ -194,7 +194,6 @@ local function is_within_clip_space(x, y)
 	return -1 <= x and x <= 1 and -1 <= y and y <= 1
 end
 
--- Take `x` and `y` instead of a vector for compatibility with Defold's `action.screen_x` and `action.screen_y`.
 function _shutter_module.screen_to_world(object, x, y, visible)
 	local camera = _camera_table[object]
 	assert(camera)
@@ -222,12 +221,11 @@ function _shutter_module.world_to_screen(object, position, visible)
 	if visible and not is_within_clip_space(clip_position.x, clip_position.y) then return end
 
 	-- clip space [-1, 1] -> screen space
-	local _, _, viewport_width, viewport_height = _shutter_module.get_viewport(object)
-	local screen_x = (clip_position.x + 1) * 0.5 * viewport_width
-	local screen_y = (clip_position.y + 1) * 0.5 * viewport_height
+	local viewport_x, viewport_y, viewport_width, viewport_height = _shutter_module.get_viewport(object)
+	local screen_x = (clip_position.x + 1) * 0.5 * viewport_width + viewport_x
+	local screen_y = (clip_position.y + 1) * 0.5 * viewport_height + viewport_y
 
-	-- Return a vector instead of its components because we're probably not going to feed this back into `screen_to_world()`.
-	return vmath.vector3(screen_x, screen_y, 0)
+	return screen_x, screen_y
 end
 
 return _shutter_module
